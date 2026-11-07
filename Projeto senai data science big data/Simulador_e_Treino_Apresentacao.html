@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Apresentação | Projeto Integrador SENAI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .code-font { font-family: 'Fira Code', monospace; }
+    .slide-enter { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Header / Navigation Bar -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-blue-600 text-white font-black px-2.5 py-1 rounded text-sm tracking-wider uppercase shadow-md shadow-blue-500/20">
+          SENAI
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+            Manutenção Preditiva com Data Science & Big Data
+            <span class="text-xs font-normal text-blue-400 bg-blue-950/70 border border-blue-800 px-2 py-0.5 rounded-full">S&M Industry</span>
+          </h1>
+          <p class="text-xs text-slate-400">Simulador de Treino & Teleprompter para Apresentação em Vídeo/Aula</p>
+        </div>
+      </div>
+
+      <!-- Live Presentation Timer -->
+      <div class="flex items-center space-x-4 bg-slate-950 px-4 py-1.5 rounded-xl border border-slate-800">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-stopwatch text-slate-400 text-sm"></i>
+          <span id="timerDisplay" class="font-mono text-lg font-bold text-emerald-400">00:00</span>
+          <span class="text-[10px] text-slate-400 font-medium">(Alvo: 07-09 min)</span>
+        </div>
+        <div class="flex items-center space-x-1.5 border-l border-slate-800 pl-3">
+          <button id="btnStartTimer" onclick="toggleTimer()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1">
+            <i class="fa-solid fa-play text-[10px]" id="timerIcon"></i> <span id="timerBtnText">Iniciar</span>
+          </button>
+          <button onclick="resetTimer()" class="text-xs text-slate-400 hover:text-slate-200 px-2 py-1 rounded-md hover:bg-slate-900 transition">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button id="btnSpeech" onclick="toggleSpeech()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center gap-2 transition">
+          <i class="fa-solid fa-volume-high" id="speechIcon"></i>
+          <span id="speechBtnText">Ouvir Fala do Slide (Áudio)</span>
+        </button>
+        <button onclick="switchTab('qa')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-graduation-cap text-amber-400"></i> Perguntas da Banca
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto p-4 md:p-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Slide Navigator & Visualizer (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col space-y-4">
+      
+      <!-- Slide Header & Progress -->
+      <div class="flex items-center justify-between bg-slate-900 px-4 py-3 rounded-xl border border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs uppercase font-extrabold px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 border border-blue-500/30">
+            Slide <span id="currentSlideNum">1</span> de 10
+          </span>
+          <span id="slideCategory" class="text-xs text-slate-400 font-medium">Capa & Identificação</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <button onclick="prevSlide()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition" id="btnPrev">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+          <button onclick="nextSlide()" class="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-30 disabled:cursor-not-allowed transition" id="btnNext">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide Card Canvas -->
+      <div id="slideContent" class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl min-h-[460px] flex flex-col justify-between slide-enter relative overflow-hidden">
+        <!-- Content will be injected dynamically -->
+      </div>
+
+      <!-- Slide Thumbnails Bar -->
+      <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800">
+        <div id="slideThumbnails" class="flex gap-2"></div>
+      </div>
+    </section>
+
+    <!-- Right Column: Teleprompter / Roteiro Falado (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col space-y-4">
+      
+      <!-- Tab Selector -->
+      <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <button id="tabPrompterBtn" onclick="switchTab('prompter')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-microphone-lines"></i> Roteiro de Fala (Vídeo/Aula)
+        </button>
+        <button id="tabQABtn" onclick="switchTab('qa')" class="flex-1 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 rounded-lg transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i> Perguntas da Banca (7)
+        </button>
+      </div>
+
+      <!-- Prompter Panel -->
+      <div id="prompterPanel" class="flex-1 flex flex-col bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-regular fa-comment-dots text-blue-400"></i> O que você deve falar neste slide:
+            </h3>
+            <p class="text-xs text-slate-400">Tempo sugerido: <span id="suggestedTime" class="text-blue-400 font-semibold">0:00 - 0:45</span></p>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="adjustSpeechSpeed(0.9)" class="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white" title="Velocidade da voz">0.9x</button>
+            <button onclick="adjustSpeechSpeed(1.0)" class="text-[11px] px-2 py-1 rounded bg-slate-800 text-blue-400 font-bold" title="Velocidade normal">1.0x</button>
+            <button onclick="adjustSpeechSpeed(1.15)" class="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white" title="Mais rápido">1.15x</button>
+          </div>
+        </div>
+
+        <!-- Script Text Box (Teleprompter style) -->
+        <div class="flex-1 bg-slate-950 p-4 rounded-xl border border-slate-800/80 overflow-y-auto max-h-[360px] text-slate-200 leading-relaxed text-sm space-y-3 font-normal" id="scriptSpeechBox">
+          <!-- Text will be injected -->
+        </div>
+
+        <!-- Golden Tip for this slide -->
+        <div class="bg-blue-950/40 border border-blue-900/60 p-3 rounded-xl flex items-start gap-2.5 text-xs text-blue-200">
+          <i class="fa-solid fa-lightbulb text-amber-400 text-sm mt-0.5"></i>
+          <div>
+            <strong class="font-semibold text-white">Dica de Ouro para a Apresentação:</strong>
+            <p id="goldenTip" class="text-slate-300 mt-0.5"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q&A Panel (Hidden by default) -->
+      <div id="qaPanel" class="hidden flex-1 flex flex-col bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+        <div class="border-b border-slate-800 pb-2">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-amber-400"></i> Perguntas Clássicas do Professor Daniel Vieira
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">Clique na pergunta para simular e ler a resposta ideal da banca:</p>
+        </div>
+
+        <div class="overflow-y-auto max-h-[440px] space-y-2.5 pr-1" id="qaAccordion">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-2.5 px-4 text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <span>Projeto Integrador: Data Science e Big Data | SENAI Roberto Mange (2026)</span>
+      <span>Navegue com as setas <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300 font-mono">→</kbd> ou botões</span>
+    </div>
+  </footer>
+
+  <script>
+    // Slide Data Matrix
+    const slides = [
+      {
+        num: 1,
+        category: "Capa & Abertura",
+        time: "0:00 - 0:45",
+        title: "PROJETO INTEGRADOR FINAL | DATA SCIENCE & BIG DATA",
+        subtitle: "Manutenção Preditiva em Equipamentos Industriais",
+        bullets: [
+          { icon: "fa-industry", title: "Empresa Alvo:", desc: "S&M Industry Tech (Manufatura Automatizada)" },
+          { icon: "fa-microchip", title: "Tecnologias:", desc: "Python, Pandas, Scikit-Learn, PySpark & IoT" },
+          { icon: "fa-user-graduate", title: "Instituição:", desc: "Centro Universitário SENAI - Campus Roberto Mange" },
+          { icon: "fa-chalkboard-user", title: "Professor:", desc: "Me. Daniel Vieira | 2026" }
+        ],
+        extraHtml: `<div class="mt-4 p-4 rounded-xl bg-blue-950/30 border border-blue-900/50 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-blue-400 uppercase font-bold tracking-wider">Objetivo Executivo</div>
+            <div class="text-sm font-semibold text-white mt-0.5">Transição de Manutenção Corretiva para Preditiva</div>
+          </div>
+          <span class="px-3 py-1 bg-blue-600 text-white font-bold text-xs rounded-lg shadow">5 Máquinas</span>
+        </div>`,
+        speech: "Olá a todos, professor Daniel e colegas. Hoje apresento o meu Projeto Integrador da disciplina de Data Science e Big Data. O tema que desenvolvi é de aplicação direta no setor produtivo: Manutenção Preditiva em Equipamentos Industriais, aplicando Análise Exploratória, Modelagem Preditiva com Machine Learning e processamento distribuído com Apache Spark na empresa S&M Industry. O objetivo central foi responder como a Ciência de Dados pode tirar uma indústria do modo reativo e transformá-la em uma operação inteligente e preditiva.",
+        tip: "Comece com tom firme e confiante. Destaque que seu foco não é apenas rodar código, mas resolver um problema real de engenharia e custos na indústria."
+      },
+      {
+        num: 2,
+        category: "1. Introdução & Cenário",
+        time: "0:45 - 1:45",
+        title: "Contexto do Negócio e Desafio Operacional",
+        subtitle: "O Desafio da S&M Industry e Pergunta Norteadora",
+        bullets: [
+          { icon: "fa-triangle-exclamation", title: "Problema Central:", desc: "Paradas não planejadas de maquinário crítico (M01 a M05) gerando atrasos em entregas e altos custos." },
+          { icon: "fa-wrench", title: "Cultura Atual:", desc: "Manutenção puramente corretiva (reage à quebra somente após a máquina parar)." },
+          { icon: "fa-bullseye", title: "Pergunta Norteadora:", desc: "'Como utilizar Data Science, ML e Big Data para identificar padrões de falhas e apoiar decisões de manutenção?'" }
+        ],
+        extraHtml: `<div class="mt-3 grid grid-cols-5 gap-2 text-center text-xs font-medium">
+          <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 text-slate-300">1. EDA Pandas</div>
+          <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 text-slate-300">2. Mineração</div>
+          <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 text-slate-300">3. Classificação</div>
+          <div class="p-2 bg-slate-800 rounded-lg border border-slate-700 text-slate-300">4. K-Means</div>
+          <div class="p-2 bg-blue-900/60 rounded-lg border border-blue-700 text-blue-200 font-bold">5. PySpark</div>
+        </div>`,
+        speech: "Para contextualizar o problema: a S&M Industry opera equipamentos automatizados em regime contínuo. O grande gargalo deles são as paradas não programadas. Hoje, a empresa atua na manutenção corretiva: a máquina quebra, a linha para, o operador chama a manutenção e o prejuízo se acumula. Como os equipamentos já contam com sensores instalados, a diretoria encomendou este projeto com uma pergunta central: Como utilizar Data Science, Machine Learning e Big Data para identificar padrões de falhas e apoiar decisões estratégicas de manutenção? Para responder a isso, estruturei o trabalho nas 5 etapas obrigatórias do projeto integrador.",
+        tip: "Enfatize a expressão 'manutenção corretiva' vs 'manutenção preditiva'. Mostre que você entendeu a dor do cliente."
+      },
+      {
+        num: 3,
+        category: "Etapa 1: Análise Exploratória",
+        time: "1:45 - 2:45",
+        title: "Compreensão dos Dados & Desbalanceamento Crítico",
+        subtitle: "5.050 registros coletados | Desbalanceamento de 82% vs 18%",
+        bullets: [
+          { icon: "fa-database", title: "Dimensão da Base:", desc: "5.050 linhas e 8 atributos monitorados entre 01/jan e 11/fev de 2026." },
+          { icon: "fa-gauge-high", title: "Sensores Coletados:", desc: "Temperatura (°C), Vibração (mm/s), Pressão (bar), Corrente (A) e Horas de Operação." },
+          { icon: "fa-scale-unbalanced", title: "Desbalanceamento Severo:", desc: "906 falhas (17,94%) e 4.144 normais (82,06%). Alerta: Acurácia não é métrica adequada!" },
+          { icon: "fa-chart-pie", title: "Máquina Crítica:", desc: "A máquina M04 apresentou a maior taxa de quebras no arquivo original (18,93%)." }
+        ],
+        extraHtml: `<div class="mt-2 p-3 bg-red-950/30 border border-red-900/40 rounded-xl flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 text-red-300">
+            <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+            <span><strong>Aviso Metodológico:</strong> Um modelo que chute 'Sem Falha' para tudo teria 82% de acurácia com ZERO utilidade!</span>
+          </div>
+        </div>`,
+        speech: "Entrando na Etapa 1, fiz a exploração inicial da telemetria bruta. Temos uma base com 5.050 registros e 8 atributos, acompanhando 5 máquinas entre janeiro e fevereiro de 2026. Temos leituras de temperatura, vibração, pressão, corrente elétrica e horímetro. Aqui encontramos o primeiro alerta crítico do projeto: o desbalanceamento de classes. Temos 82% de registros normais e apenas 18% de falhas. Por que isso é tão importante? Porque define nossa postura metodológica: a acurácia tradicional é uma métrica cega para este problema! Se criássemos um modelo ingênuo que dissesse 'nunca quebra', ele teria 82% de acurácia errando 100% das falhas. Além disso, a máquina M04 despontou com a maior taxa de quebras do lote, com quase 19%.",
+        tip: "Aponte o desbalanceamento com ênfase. Os professores adoram quando o aluno explica com clareza por que acurácia é perigosa em dados desbalanceados."
+      },
+      {
+        num: 4,
+        category: "Etapa 2: Preparação e Mineração",
+        time: "2:45 - 3:55",
+        title: "Qualidade de Dados & Mineração de Correlações",
+        subtitle: "Tratamento de Nulos, Decisão de Outliers e Correlações Chave",
+        bullets: [
+          { icon: "fa-filter", title: "Deduplicação:", desc: "50 duplicatas exatas eliminadas -> Base limpa consolidada com 5.000 registros." },
+          { icon: "fa-wand-magic-sparkles", title: "Valores Ausentes:", desc: "50 nulos por sensor numérico mantidos na EDA e imputados com mediana no Pipeline do ML." },
+          { icon: "fa-fire", title: "Decisão sobre Outliers:", desc: "Temperaturas de até 278 °C NÃO foram descartadas! Em manutenção, picos térmicos são o sintoma da falha!" },
+          { icon: "fa-chart-line", title: "Maiores Correlações:", desc: "Horas de Operação (+0,38) e Vibração (+0,30). Pressão com falha foi nula (-0,02)." }
+        ],
+        extraHtml: `<div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+            <span class="text-slate-400">Horas com Falha:</span>
+            <div class="text-sm font-bold text-amber-400">8.887 h <span class="text-[10px] text-slate-400">(vs 5.484 h normal)</span></div>
+          </div>
+          <div class="p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+            <span class="text-slate-400">Vibração com Falha:</span>
+            <div class="text-sm font-bold text-rose-400">3,64 mm/s <span class="text-[10px] text-slate-400">(vs 2,93 mm/s normal)</span></div>
+          </div>
+        </div>`,
+        speech: "Na Etapa 2, passamos para a higienização dos dados. Encontrei e removi 50 duplicatas exatas, consolidando a base em 5.000 registros redondos. Identifiquei também 50 valores ausentes por sensor. Mantive esses nulos na fase exploratória e apliquei a imputação pela mediana via Pipeline na modelagem, evitando vazamento de dados. Agora, chamo atenção para uma decisão técnica fundamental: os outliers. Encontramos picos de temperatura de até 278 graus e vibração de 15 mm por segundo. Eu tomei a decisão consciente de NÃO descartá-los, porque em engenharia de manutenção, picos térmicos e vibratórios não são erros de medição: são o próprio sintoma físico da máquina prestes a quebrar! Na correlação de Pearson, confirmamos que Horas de Operação com mais 0,38 e Vibração com mais 0,30 são os maiores vilões associados à quebra.",
+        tip: "Este é um dos slides mais fortes da sua apresentação. Defenda energicamente por que você NÃO jogou fora os outliers de 278 °C."
+      },
+      {
+        num: 5,
+        category: "Etapa 3: Modelagem Preditiva",
+        time: "3:55 - 5:10",
+        title: "Machine Learning Supervisionado & Divisão Temporal",
+        subtitle: "Por que não usar Shuffle? | Comparativo de Algoritmos",
+        bullets: [
+          { icon: "fa-clock", title: "Divisão Cronológica Estrita:", desc: "Treino (60%, 3.000 amostras) | Validação (20%, 1.000) | Teste Cego (20%, 1.000)." },
+          { icon: "fa-ban", title: "Sem Data Leakage:", desc: "Em séries temporais e telemetria, shuffle aleatório faz o modelo 'espiar o futuro'." },
+          { icon: "fa-trophy", title: "Random Forest Campeã:", desc: "Atingiu F1-Score de 0,352, precisão de 59,4% e melhor recall (25,0%) na validação." }
+        ],
+        extraHtml: `<div class="mt-2 overflow-hidden rounded-lg border border-slate-700 text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-800 text-slate-300 font-semibold">
+              <tr><th class="p-2">Modelo</th><th class="p-2">F1-Score</th><th class="p-2">Precisão</th><th class="p-2">Recall</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 bg-slate-900/60">
+              <tr><td class="p-2 text-slate-400">Dummy (Baseline)</td><td class="p-2 text-slate-400">0,000</td><td class="p-2 text-slate-400">0,0%</td><td class="p-2 text-slate-400">0,0%</td></tr>
+              <tr><td class="p-2 text-slate-300">Árvore de Decisão</td><td class="p-2 text-slate-300">0,208</td><td class="p-2 text-slate-300">71,4%</td><td class="p-2 text-slate-300">12,2%</td></tr>
+              <tr><td class="p-2 text-slate-300">Regressão Logística</td><td class="p-2 text-slate-300">0,315</td><td class="p-2 text-slate-300">60,3%</td><td class="p-2 text-slate-300">21,3%</td></tr>
+              <tr class="bg-blue-950/40 text-blue-300 font-bold"><td class="p-2">Random Forest ⭐</td><td class="p-2">0,352</td><td class="p-2">59,4%</td><td class="p-2">25,0%</td></tr>
+            </tbody>
+          </table>
+        </div>`,
+        speech: "Chegando na modelagem supervisionada, adotei uma estratégia de divisão temporal estrita, em vez do tradicional embaralhamento aleatório. Em dados de telemetria, se você embaralhar, o modelo aprende com o futuro para prever o passado. Separamos 60% inicial para Treino, 20% intermediário para Validação e os últimos 20% cronológicos como Teste Cego intocado. Testamos o Modelo Dummy como linha de base, a Árvore de Decisão, a Regressão Logística e a Random Forest. A Random Forest foi a vencedora incontestável: obteve o maior F1-score de 0,352, mantendo 59,4% de precisão e o melhor recall de 25% na partição de validação.",
+        tip: "Destaque a razão da divisão temporal. Isso prova que você domina engenharia de machine learning aplicada a séries temporais."
+      },
+      {
+        num: 6,
+        category: "Etapa 3: Resultados e Reflexão",
+        time: "5:10 - 6:20",
+        title: "Avaliação no Teste Cego & Trade-off de Fábrica",
+        subtitle: "Acurácia 82,5% | F1 0,3396 | Análise Crítica de Falso Negativo",
+        bullets: [
+          { icon: "fa-bullseye", title: "Métricas no Teste Final:", desc: "Acurácia: 82,50% | Precisão: 58,44% | Recall: 23,94% | F1-Score: 0,3396." },
+          { icon: "fa-bell", title: "32 Falsos Positivos:", desc: "Custo baixo: técnico vai à máquina e faz uma checagem preventiva rápida." },
+          { icon: "fa-skull-crossbones", title: "143 Falsos Negativos:", desc: "Custo altíssimo: máquina quebra na surpresa, danifica ferramentas e para a linha!" },
+          { icon: "fa-clipboard-check", title: "Conclusão Prática:", desc: "O modelo deixa passar 76% das falhas. Logo, deve atuar como alerta consultivo, não autônomo." }
+        ],
+        extraHtml: `<div class="mt-2 p-3 bg-amber-950/30 border border-amber-900/50 rounded-xl text-xs flex items-center justify-between">
+          <div class="text-amber-200">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i>
+            <strong>Postura de Engenheiro:</strong> Reconhecer a limitação de recall é maturidade profissional, não fraqueza!
+          </div>
+        </div>`,
+        speech: "Avaliamos a Random Forest no conjunto de teste cego com 1.000 amostras nunca vistas. O modelo obteve 82,5% de acurácia, 58,4% de precisão e 23,9% de recall. Aqui trago a reflexão mais importante do projeto: o impacto do erro no chão de fábrica. Tivemos 32 Falsos Positivos: o modelo alertou falha, o mecânico foi até lá e viu que estava tudo bem. O custo disso é baixo. Mas tivemos 143 Falsos Negativos: a máquina quebrou de surpresa sem aviso! Isso causa parada não programada e prejuízo grave. Minha conclusão sincera é: com 24% de recall, este modelo NÃO deve operar sozinho desligando a fábrica. Ele deve funcionar hoje como uma ferramenta consultiva de suporte para os técnicos.",
+        tip: "A banca vai aplaudir a sua honestidade técnica. Mostrar que sabe a diferença de custo entre Falso Positivo e Falso Negativo é o ponto alto da apresentação."
+      },
+      {
+        num: 7,
+        category: "Etapa 4: K-Means (Semáforo)",
+        time: "6:20 - 7:25",
+        title: "Aprendizado Não Supervisionado & Perfis de Máquina",
+        subtitle: "K-Means com k=3 e StandardScaler | Semáforo Operacional",
+        bullets: [
+          { icon: "fa-sliders", title: "Padronização Obrigatória:", desc: "StandardScaler indispensável devido à escala de horas (milhares) vs vibração (0 a 15)." },
+          { icon: "fa-circle-check", title: "Cluster 0 (Novas / Revisadas):", desc: "2.509 registros | Horas: 3.465 h | Vibração: 2,56 mm/s | Taxa de falha: apenas 4,5%." },
+          { icon: "fa-circle-exclamation", title: "Cluster 1 (Desgaste Severo):", desc: "2.466 registros | Horas: 8.780 h | Vibração: 3,57 mm/s | Taxa de falha: 32,0% (7x maior risco!)." },
+          { icon: "fa-fire-flame-curved", title: "Cluster 2 (Anomalias Térmicas):", desc: "25 registros com temperatura média de 208,3 °C (picos atípicos graves)." }
+        ],
+        extraHtml: `<div class="mt-2 p-3 bg-emerald-950/30 border border-emerald-900/50 rounded-xl text-xs flex items-center justify-between">
+          <div class="text-emerald-200">
+            <i class="fa-solid fa-traffic-light text-emerald-400 mr-1.5"></i>
+            <strong>Semáforo de Saúde:</strong> Se o horímetro passa de 8.000 h e vibração > 3,5 mm/s, agenda revisão imediata!
+          </div>
+        </div>`,
+        speech: "Na Etapa 4, aplicamos Machine Learning Não Supervisionado com K-Means. Retiramos o rótulo de falha para deixar o algoritmo encontrar os padrões naturais. Aplicamos o StandardScaler — passo obrigatório para não distorcer as distâncias euclidianas. Definimos k=3 grupos muito nítidos: O Cluster 0 reúne máquinas novas ou recém-revisadas, com 3.400 horas, onde a taxa de falha é de apenas 4,5%. Já o Cluster 1 agrupa máquinas com mais de 8.700 horas e alta vibração: aqui a taxa de quebra salta para 32%, ou seja, 7 vezes mais arriscado! O Cluster 2 capturou 25 eventos com temperatura média de 208 graus. Isso cria um valor prático imediato: a S&M Industry pode implantar hoje um Semáforo de Saúde para disparar preventiva assim que a máquina migrar para o perfil do Cluster 1.",
+        tip: "Mostre como o K-Means complementa o modelo supervisionado e já gera retorno financeiro imediato para a fábrica."
+      },
+      {
+        num: 8,
+        category: "Etapa 5: Big Data com PySpark",
+        time: "7:25 - 8:15",
+        title: "Processamento em Larga Escala com Apache Spark",
+        subtitle: "Por que usar Spark na Indústria? | Pandas vs PySpark",
+        bullets: [
+          { icon: "fa-bolt", title: "Pipeline no PySpark:", desc: "SparkSession, schema estruturado, dropDuplicates e agregação com DataFrame API validando 100% com o Pandas." },
+          { icon: "fa-laptop", title: "Pandas (Single-Node):", desc: "Eager evaluation, dependente da memória RAM local. Perfeito para pilotos de 5.000 linhas." },
+          { icon: "fa-network-wired", title: "PySpark (Distribuído):", desc: "Lazy evaluation (DAG), processamento particionado em clusters. Suporta Terabytes e Streaming contínuo." },
+          { icon: "fa-industry", title: "Escalação na Fábrica 4.0:", desc: "Se passarmos de 5 para 100 máquinas com leituras por segundo, o Pandas dá Out-Of-Memory. O Spark escala horizontalmente." }
+        ],
+        extraHtml: `<div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2 bg-slate-800 rounded border border-slate-700">
+            <strong class="text-slate-300">Pandas:</strong> Execução imediata (In-Memory)
+          </div>
+          <div class="p-2 bg-blue-950/60 rounded border border-blue-800 text-blue-200">
+            <strong>PySpark:</strong> DAG Otimizado & Cluster Distribuído
+          </div>
+        </div>`,
+        speech: "Na Etapa 5, demonstramos a escalabilidade do projeto utilizando o Apache Spark com PySpark. Reproduzi todo o fluxo de carga, inferência de schema, deduplicação e agregação de falhas por equipamento. Os números bateram exatamente com o Pandas. E por que o Spark é fundamental aqui? Hoje temos 5 máquinas e 5.000 linhas — qualquer computador roda isso com Pandas. Mas na Indústria 4.0 real, se tivermos 100 máquinas gerando leituras a cada segundo, teremos milhões de linhas por dia. O Pandas geraria erro de Out Of Memory. O Spark resolve isso particionando o processamento em cluster com Lazy Evaluation, preparando a arquitetura da S&M Industry para crescer sem travar o servidor.",
+        tip: "Enfatize a expressão 'Lazy Evaluation' e 'Escalabilidade Horizontal'. É o que os professores de Big Data esperam ouvir."
+      },
+      {
+        num: 9,
+        category: "6. Plano de Ação",
+        time: "8:15 - 9:00",
+        title: "Plano de Ação e Recomendações Técnicas",
+        subtitle: "Horizontes de Curto, Médio e Longo Prazo para a S&M Industry",
+        bullets: [
+          { icon: "fa-gauge", title: "1. Curto Prazo (Imediato):", desc: "Auditar fiação e calibração dos sensores (investigar os 50 nulos); revisar com urgência a máquina M04." },
+          { icon: "fa-sliders", title: "2. Médio Prazo (Operação & ML):", desc: "Criar regra no supervisório baseada no Cluster 1 (>8.000h e >3,5 mm/s); baixar threshold da Random Forest para 0.25 para subir o Recall para >70%." },
+          { icon: "fa-cloud", title: "3. Longo Prazo (Escala & IoT):", desc: "Spark Streaming integrado com Apache Kafka e desenvolvimento de modelo RUL (Remaining Useful Life)." }
+        ],
+        extraHtml: `<div class="mt-2 p-3 bg-blue-950/40 border border-blue-900/60 rounded-xl text-xs flex justify-between items-center text-blue-200">
+          <span><strong>Meta Principal:</strong> Elevar a disponibilidade fabril (OEE) e erradicar paradas surpresa.</span>
+        </div>`,
+        speech: "Para fechar a entrega para a diretoria da S&M Industry, traduzi essas descobertas em um plano de ação estruturado em 3 horizontes: No Curto Prazo imediato: auditar os sensores para eliminar os 50 nulos, calibrar termopares com temperaturas anormais e fazer revisão mecânica prioritária na máquina M04. No Médio Prazo operacional: implantar o gatilho automático de manutenção baseado no nosso Cluster 1 e reajustar o limiar de decisão do modelo preditivo para 0.25, elevando o recall para mais de 70%. E no Longo Prazo de infraestrutura: colocar o PySpark rodando em tempo real com streaming via Apache Kafka e modelar o tempo de vida restante dos componentes.",
+        tip: "Apresentar um plano de ação dividido em horizontes temporais demonstra visão estratégica e profissionalismo executivo."
+      },
+      {
+        num: 10,
+        category: "Conclusão & Fechamento",
+        time: "9:00 - 9:30",
+        title: "Síntese do Projeto Integrador e Aprendizados",
+        subtitle: "Conclusões Finais e Agradecimentos",
+        bullets: [
+          { icon: "fa-check-double", title: "Viabilidade Técnica Comprovada:", desc: "Data Science e Big Data são plenamente capazes de antecipar quebras industriais." },
+          { icon: "fa-compass", title: "Variáveis Chave:", desc: "Horas de Operação e Vibração Mecânica são os maiores preditores da falha." },
+          { icon: "fa-layer-group", title: "Valor Imediato:", desc: "O agrupamento K-Means já fornece um semáforo de risco pronto para aplicação em fábrica." },
+          { icon: "fa-handshake", title: "Próximos Passos:", desc: "Ajuste de limiares para elevar o recall e streaming em tempo real com PySpark." }
+        ],
+        extraHtml: `<div class="mt-4 p-4 bg-slate-900 border border-slate-700 rounded-xl text-center">
+          <div class="text-sm font-bold text-white">Muito obrigado pela atenção!</div>
+          <div class="text-xs text-blue-400 mt-1">Fico à disposição do Professor Me. Daniel Vieira e da banca para perguntas.</div>
+        </div>`,
+        speech: "Para concluir: o projeto me permitiu unir na prática análise exploratória, prevenção de vazamento de dados em séries temporais, aprendizado supervisionado, K-Means e Big Data com PySpark. Conseguimos comprovar que é viável transitar da manutenção corretiva para a preditiva, trazendo confiabilidade e redução de custos para a indústria. Agradeço muito ao professor Daniel Vieira e a todos pela atenção. Fico agora totalmente à disposição para as perguntas da banca!",
+        tip: "Finalize agradecendo o professor Daniel Vieira e se colocando à disposição. Fique calmo, você conhece o projeto melhor do que ninguém!"
+      }
+    ];
+
+    // Bank Q&A
+    const qas = [
+      {
+        q: "1. Por que você não usou a Acurácia como métrica principal para escolher o modelo?",
+        a: "Porque a base de dados tem classes severamente desbalanceadas: 82% normal e apenas 18% com falha. Um modelo ingênuo que sempre previsse 'sem falha' atingiria 82% de acurácia com zero utilidade. Por isso adotamos o F1-Score, que balanceia harmonicamente Precisão e Recall na classe minoritária de falhas."
+      },
+      {
+        q: "2. Por que você fez divisão temporal cronológica em vez de usar K-Fold Cross Validation aleatório?",
+        a: "Porque dados de telemetria industrial constituem uma série temporal. Se usássemos K-Fold tradicional ou shuffle aleatório, amostras do futuro seriam usadas para treinar dados do passado, gerando data leakage temporal (vazamento de dados). A divisão cronológica 60-20-20 simula exatamente o cenário real de chão de fábrica."
+      },
+      {
+        q: "3. Você identificou temperaturas de 278 °C. Por que não descartou como outlier?",
+        a: "Em dados industriais, não se pode remover outliers cegamente. Uma temperatura de 278 °C em um motor ou mancal é o sintoma termodinâmico de atrito severo e pré-quebra mecânica. Descartar esses pontos seria deletar a própria evidência física que o modelo preditivo foi contratado para detectar."
+      },
+      {
+        q: "4. Por que a Random Forest foi superior à Árvore de Decisão simples e à Regressão Logística?",
+        a: "A Random Forest é um método de ensemble por bagging. Ela cria dezenas de árvores com subamostras aleatórias de dados e atributos, reduzindo a variância e mitigando o sobreajuste (overfitting) que a Árvore de Decisão simples sofreu. Na partição de validação, a Random Forest obteve o maior F1-score (0,352) e melhor equilíbrio entre precisão e recall."
+      },
+      {
+        q: "5. Por que o StandardScaler foi obrigatório no K-Means?",
+        a: "O K-Means calcula distâncias geométricas euclidianas. Horas de operação variavam na casa de 10.000 horas, enquanto vibração variava entre 0 e 15. Se não padronizássemos com média 0 e desvio padrão 1, a variável horas dominaria 99% do cálculo da distância, tornando a vibração e a temperatura irrelevantes para o algoritmo."
+      },
+      {
+        q: "6. O modelo teve Recall de 23,9% no teste. Isso não é ruim para a indústria?",
+        a: "Essa é a análise crítica essencial: com 24% de recall, o modelo deixa passar 76% das falhas como falsos negativos, o que impede que ele atue de forma 100% autônoma. Por isso, no plano de ação recomendei: (1) usá-lo inicialmente como sistema consultivo e (2) reajustar o limiar de decisão de 0.5 para 0.25 e treinar com class_weight='balanced' para priorizar a sensibilidade a falhas."
+      },
+      {
+        q: "7. Por que usar PySpark se o arquivo tem apenas 5.000 linhas e roda no Pandas?",
+        a: "O dataset com 5.000 linhas foi uma prova de conceito com 5 máquinas. Em um cenário real de Indústria 4.0 com centenas de máquinas e amostragem por segundo, o volume escala rapidamente para gigabytes e terabytes, causando estouro de memória (Out-Of-Memory) no Pandas. O código em PySpark garante que a arquitetura está pronta para processamento distribuído em nuvem."
+      }
+    ];
+
+    let currentSlide = 0;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let speechRate = 1.0;
+    let synth = window.speechSynthesis;
+    let isSpeaking = false;
+
+    function renderSlide(index) {
+      currentSlide = index;
+      const s = slides[index];
+
+      // Update Header & Category
+      document.getElementById("currentSlideNum").innerText = s.num;
+      document.getElementById("slideCategory").innerText = s.category;
+      document.getElementById("suggestedTime").innerText = s.time;
+
+      // Update Canvas
+      let bulletsHtml = s.bullets.map(b => `
+        <div class="flex items-start space-x-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <div class="mt-0.5 p-2 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs">
+            <i class="fa-solid ${b.icon}"></i>
+          </div>
+          <div>
+            <span class="text-xs font-bold text-white">${b.title}</span>
+            <p class="text-xs text-slate-300 mt-0.5">${b.desc}</p>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById("slideContent").innerHTML = `
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-400">${s.category}</span>
+            <span class="text-[11px] text-slate-400 font-mono"><i class="fa-regular fa-clock mr-1"></i>${s.time}</span>
+          </div>
+          <h2 class="text-xl md:text-2xl font-black text-white mt-1 tracking-tight leading-snug">${s.title}</h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1">${s.subtitle}</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-4">
+            ${bulletsHtml}
+          </div>
+        </div>
+
+        <div>
+          ${s.extraHtml || ''}
+        </div>
+      `;
+
+      // Update Prompter
+      document.getElementById("scriptSpeechBox").innerHTML = `
+        <p class="text-base font-medium text-slate-100 italic border-l-2 border-blue-500 pl-3">
+          "${s.speech}"
+        </p>
+      `;
+
+      // Golden Tip
+      document.getElementById("goldenTip").innerText = s.tip;
+
+      // Update Navigation Buttons State
+      document.getElementById("btnPrev").disabled = index === 0;
+      document.getElementById("btnNext").disabled = index === slides.length - 1;
+
+      // Update Thumbnails
+      updateThumbnails();
+
+      // Cancel ongoing speech if slide changes
+      if (synth && synth.speaking) {
+        synth.cancel();
+        isSpeaking = false;
+        updateSpeechBtnUI();
+      }
+    }
+
+    function updateThumbnails() {
+      const container = document.getElementById("slideThumbnails");
+      container.innerHTML = slides.map((s, idx) => `
+        <button onclick="renderSlide(${idx})" class="flex-shrink-0 w-24 p-2 rounded-lg border text-left transition ${idx === currentSlide ? 'bg-blue-600/30 border-blue-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'}">
+          <div class="text-[10px] font-extrabold uppercase text-blue-400">Slide ${s.num}</div>
+          <div class="text-[10px] font-medium truncate text-slate-300 mt-0.5">${s.title.substring(0, 16)}...</div>
+        </button>
+      `).join('');
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        renderSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        renderSlide(currentSlide - 1);
+      }
+    }
+
+    // Keyboard Navigation
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") nextSlide();
+      if (e.key === "ArrowLeft") prevSlide();
+    });
+
+    // Timer Logic
+    function toggleTimer() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById("timerIcon").className = "fa-solid fa-play text-[10px]";
+        document.getElementById("timerBtnText").innerText = "Continuar";
+      } else {
+        isTimerRunning = true;
+        document.getElementById("timerIcon").className = "fa-solid fa-pause text-[10px]";
+        document.getElementById("timerBtnText").innerText = "Pausar";
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+          const secs = String(timerSeconds % 60).padStart(2, '0');
+          const display = document.getElementById("timerDisplay");
+          display.innerText = `${mins}:${secs}`;
+
+          // Color change based on time
+          if (timerSeconds < 420) { // < 7 min
+            display.className = "font-mono text-lg font-bold text-emerald-400";
+          } else if (timerSeconds <= 540) { // 7 - 9 min (Perfect target)
+            display.className = "font-mono text-lg font-bold text-amber-400";
+          } else { // > 9 min
+            display.className = "font-mono text-lg font-bold text-rose-500 animate-pulse";
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerSeconds = 0;
+      document.getElementById("timerDisplay").innerText = "00:00";
+      document.getElementById("timerDisplay").className = "font-mono text-lg font-bold text-emerald-400";
+      document.getElementById("timerIcon").className = "fa-solid fa-play text-[10px]";
+      document.getElementById("timerBtnText").innerText = "Iniciar";
+    }
+
+    // Text-to-Speech logic
+    function toggleSpeech() {
+      if (!('speechSynthesis' in window)) {
+        alert("Seu navegador não suporta sintetizador de voz nativo. Use o Google Chrome ou Edge.");
+        return;
+      }
+
+      if (synth.speaking) {
+        synth.cancel();
+        isSpeaking = false;
+        updateSpeechBtnUI();
+        return;
+      }
+
+      const text = slides[currentSlide].speech;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      utterance.rate = speechRate;
+
+      // Find PT-BR voice
+      const voices = synth.getVoices();
+      const ptVoice = voices.find(v => v.lang.includes("pt-BR") || v.lang.includes("pt_BR"));
+      if (ptVoice) utterance.voice = ptVoice;
+
+      utterance.onend = () => {
+        isSpeaking = false;
+        updateSpeechBtnUI();
+      };
+
+      utterance.onerror = () => {
+        isSpeaking = false;
+        updateSpeechBtnUI();
+      };
+
+      synth.speak(utterance);
+      isSpeaking = true;
+      updateSpeechBtnUI();
+    }
+
+    function updateSpeechBtnUI() {
+      const btn = document.getElementById("btnSpeech");
+      const icon = document.getElementById("speechIcon");
+      const text = document.getElementById("speechBtnText");
+      if (isSpeaking) {
+        btn.className = "text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center gap-2 transition animate-pulse";
+        icon.className = "fa-solid fa-stop";
+        text.innerText = "Parar Áudio";
+      } else {
+        btn.className = "text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center gap-2 transition";
+        icon.className = "fa-solid fa-volume-high";
+        text.innerText = "Ouvir Fala do Slide (Áudio)";
+      }
+    }
+
+    function adjustSpeechSpeed(rate) {
+      speechRate = rate;
+      if (synth.speaking) {
+        toggleSpeech();
+        toggleSpeech();
+      }
+    }
+
+    // Tabs Switcher
+    function switchTab(tab) {
+      if (tab === 'prompter') {
+        document.getElementById("prompterPanel").classList.remove("hidden");
+        document.getElementById("qaPanel").classList.add("hidden");
+        document.getElementById("tabPrompterBtn").className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center justify-center gap-1.5";
+        document.getElementById("tabQABtn").className = "flex-1 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 rounded-lg transition flex items-center justify-center gap-1.5";
+      } else {
+        document.getElementById("prompterPanel").classList.add("hidden");
+        document.getElementById("qaPanel").classList.remove("hidden");
+        document.getElementById("tabPrompterBtn").className = "flex-1 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 rounded-lg transition flex items-center justify-center gap-1.5";
+        document.getElementById("tabQABtn").className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-600 text-white transition flex items-center justify-center gap-1.5";
+      }
+    }
+
+    // Render Q&A Accordion
+    function renderQA() {
+      const container = document.getElementById("qaAccordion");
+      container.innerHTML = qas.map((item, idx) => `
+        <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+          <button onclick="toggleAccordion(${idx})" class="w-full p-3 text-left text-xs font-bold text-slate-200 hover:text-amber-400 flex items-center justify-between transition">
+            <span>${item.q}</span>
+            <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]" id="accIcon-${idx}"></i>
+          </button>
+          <div id="accContent-${idx}" class="hidden p-3 border-t border-slate-900 bg-slate-900/60 text-xs text-slate-300 leading-relaxed">
+            <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1">Resposta Ideal para a Banca:</div>
+            <p>${item.a}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleAccordion(idx) {
+      const content = document.getElementById(`accContent-${idx}`);
+      const icon = document.getElementById(`accIcon-${idx}`);
+      if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-[10px]";
+      } else {
+        content.classList.add("hidden");
+        icon.className = "fa-solid fa-chevron-down text-slate-500 text-[10px]";
+      }
+    }
+
+    // Init App
+    window.addEventListener("DOMContentLoaded", () => {
+      renderSlide(0);
+      renderQA();
+    });
+  </script>
+</body>
+</html>
